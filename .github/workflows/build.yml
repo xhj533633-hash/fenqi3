@@ -1,0 +1,40 @@
+name: Build Unsigned IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build (unsigned)
+        run: |
+          cd CalculatorApp
+          xcodebuild \
+            -project CalculatorApp.xcodeproj \
+            -scheme CalculatorApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r CalculatorApp/build/Build/Products/Release-iphoneos/CalculatorApp.app Payload/
+          zip -qry CalculatorApp-unsigned.ipa Payload
+          ls -lh CalculatorApp-unsigned.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: CalculatorApp-unsigned-ipa
+          path: CalculatorApp/CalculatorApp-unsigned.ipa
