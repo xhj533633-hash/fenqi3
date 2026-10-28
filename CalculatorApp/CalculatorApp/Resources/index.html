@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="分期计算">
+<meta name="theme-color" content="#f4f5f7">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMTgwIDE4MCI+PHJlY3Qgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxODAiIGZpbGw9IiMxNDE3MWUiLz48cmVjdCB4PSIzOCIgeT0iMzYiIHdpZHRoPSIxMDQiIGhlaWdodD0iMTA4IiByeD0iMTQiIGZpbGw9IiNmZmYiLz48cmVjdCB4PSI1MiIgeT0iNTIiIHdpZHRoPSI3NiIgaGVpZ2h0PSIxOCIgcng9IjQiIGZpbGw9IiNkOTNhMmYiLz48cmVjdCB4PSI1MiIgeT0iODIiIHdpZHRoPSI3NiIgaGVpZ2h0PSIxMCIgcng9IjUiIGZpbGw9IiNkY2RmZTgiLz48cmVjdCB4PSI1MiIgeT0iMTAyIiB3aWR0aD0iNzYiIGhlaWdodD0iMjYiIHJ4PSI1IiBmaWxsPSIjMWY2ZmViIi8+PC9zdmc+">
+<title>分期计算器</title>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --ink:#14171e;
+    --sub:#828896;
+    --line:#e6e8ee;
+    --a:#d93a2f;
+    --b:#1f6feb;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0 auto;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI","Microsoft YaHei",sans-serif;
+    font-size:15px;line-height:1.5;padding:22px 16px 40px;max-width:440px;min-height:100vh;
+  }
+
+  .card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(16,24,40,.05);}
+
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .label{font-size:12.5px;color:var(--sub);margin-bottom:5px;}
+  .inputwrap{display:flex;align-items:center;border-bottom:1.5px solid var(--line);transition:border-color .15s;}
+  .inputwrap:focus-within{border-color:var(--ink);}
+  .inputwrap .unit{color:var(--sub);font-size:16px;flex:none;padding-right:2px;}
+  .inputwrap input{
+    flex:1;min-width:0;border:0;outline:0;background:transparent;
+    font-size:24px;font-weight:650;font-family:inherit;color:var(--ink);
+    padding:8px 0 9px;letter-spacing:-.3px;-moz-appearance:textfield;
+  }
+  .inputwrap input::-webkit-outer-spin-button,
+  .inputwrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .stepbtn{
+    flex:none;width:26px;height:26px;border:0;border-radius:7px;background:#f0f2f6;
+    color:#828896;font-size:14px;line-height:1;font-family:inherit;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .stepbtn:active{background:#e2e5ec;}
+
+  /* 行布局：减号固定宽 — 输入区固定宽 — 加号，保证两行加号竖直对齐 */
+  .dprow{display:flex;align-items:center;}
+  .dpwrap{flex:none;width:150px;}
+  .dprow .inputwrap input{flex:1;min-width:0;text-align:left;}
+  .dprow .stepbtn{width:26px;height:26px;border-radius:7px;}
+  .dprow .stepbtn:nth-of-type(1){flex:none;}
+  .dprow .stepbtn + .dpwrap{margin-left:8px;}
+  .dprow .dpwrap + .stepbtn{margin-left:8px;flex:none;}
+
+  /* 字段分界线 */
+  .divider{height:1px;background:var(--line);margin:15px 0;}
+  .err{color:#d92d20;font-size:12px;margin-top:6px;display:none;}
+
+  .plans{display:grid;gap:11px;margin-top:14px;}
+  .plan{background:#fff;border-radius:14px;padding:14px 16px 15px;box-shadow:0 1px 2px rgba(16,24,40,.05);border-top:3px solid var(--a);}
+  .pname{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--a);}
+  .row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;font-size:13.5px;}
+  .row .k{color:var(--sub);}
+  .row .v{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink);}
+  .pay{display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;padding-top:10px;border-top:1px solid var(--line);}
+  .pay .k{font-size:13.5px;color:var(--sub);}
+  .pay .v{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);}
+  .pay .v small{font-size:12px;font-weight:600;margin-left:2px;letter-spacing:0;color:var(--sub);}
+  .row.sub{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);}
+  .row.sub .k{font-size:13.5px;color:var(--sub);}
+  .row.sub .v{font-size:15px;font-weight:700;color:var(--ink);}
+  .offnote{margin-top:5px;text-align:right;font-size:14.5px;color:var(--a);font-variant-numeric:tabular-nums;font-weight:700;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+  .chips button{
+    border:1px solid var(--line);background:#fff;color:#4a5060;border-radius:8px;
+    padding:5px 9px;font-size:12.5px;font-family:inherit;font-weight:600;cursor:pointer;
+    font-variant-numeric:tabular-nums;transition:.12s;
+  }
+  .chips button:active{background:#f0f2f6;}
+  .chips button.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+
+  /* 保存图片按钮 */
+  .savebar{margin-top:14px;}
+  .savebtn{
+    width:100%;border:0;border-radius:13px;padding:13px 0;font-size:15px;font-weight:700;
+    font-family:inherit;color:#fff;background:var(--ink);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+  }
+  .savebtn:active{opacity:.85;}
+
+  /* 图片预览弹层 */
+  .mask{
+    position:fixed;inset:0;background:#0b0d12;z-index:9999;
+    display:none;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px 14px;overflow:auto;-webkit-overflow-scrolling:touch;
+    -webkit-backface-visibility:hidden;
+  }
+  .mask.show{display:flex;}
+  body.masking{overflow:hidden;position:fixed;width:100%;}
+  .mask .tip{color:#fff;font-size:13px;text-align:center;margin-bottom:12px;line-height:1.7;}
+  .mask .tip b{font-weight:700;}
+  .mask img{
+    width:100%;max-width:420px;border-radius:14px;display:block;
+    box-shadow:0 10px 40px rgba(0,0,0,.5);-webkit-touch-callout:default;
+  }
+  .mask .close{
+    margin-top:16px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;
+    border-radius:999px;padding:9px 26px;font-size:14px;font-family:inherit;cursor:pointer;
+  }
+  .mask .dl{
+    margin-top:10px;color:rgba(255,255,255,.6);font-size:12.5px;text-decoration:underline;
+    background:none;border:0;font-family:inherit;cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="field">
+    <div class="label">销售价</div>
+    <div class="inputwrap">
+      <span class="unit">¥</span>
+      <input id="price" type="number" inputmode="decimal" value="3300">
+    </div>
+    <div class="chips" id="priceChips"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="field">
+    <div class="label">加价</div>
+    <div class="dprow">
+      <button class="stepbtn" id="addMinus" type="button" aria-label="减100">−</button>
+      <div class="inputwrap dpwrap">
+        <span class="unit">¥</span>
+        <input id="add" type="number" inputmode="decimal" value="1200">
+      </div>
+      <button class="stepbtn" id="addPlus" type="button" aria-label="加100">+</button>
+    </div>
+    <div class="chips" id="addChips"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="field">
+    <div class="label">首付</div>
+    <div class="dprow">
+      <button class="stepbtn" id="dpMinus" type="button" aria-label="减100">−</button>
+      <div class="inputwrap dpwrap">
+        <span class="unit">¥</span>
+        <input id="dp" type="number" inputmode="decimal" placeholder="0">
+      </div>
+      <button class="stepbtn" id="dpPlus" type="button" aria-label="加100">+</button>
+    </div>
+    <div class="chips" id="dpChips"></div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="field">
+    <div class="label">乘数系数</div>
+    <div class="chips" id="mulChips" style="margin-top:6px;"></div>
+  </div>
+</div>
+
+<div class="plans">
+  <div class="plan" id="planCard">
+    <div class="pname" id="pname">方案</div>
+    <div class="row"><span class="k">首付</span><span class="v" id="dpa">¥0.00</span></div>
+    <div class="pay">
+      <span class="k">月供 8期</span>
+      <span class="v" id="ma">860.63<small>元</small></span>
+    </div>
+    <div class="row sub"><span class="k">提前结清 打八折</span><span class="v" id="la">688 元</span></div>
+    <div class="offnote"><span id="ca">剩余6期共可优惠 1,032.76 元</span></div>
+  </div>
+</div>
+
+<div class="savebar">
+  <button class="savebtn" id="saveBtn" type="button">保存方案为图片</button>
+</div>
+
+<div class="mask" id="mask">
+  <div class="tip" id="maskTip">长按下方图片 → <b>存储到“照片”</b></div>
+  <img id="shot" alt="分期方案">
+  <button class="close" id="closeMask" type="button">关闭</button>
+  <button class="dl" id="dlLink" type="button">或点此下载图片文件</button>
+</div>
+
+<script>
+const N = 8;
+const EARLY_RATE = 0.8; // 提前结清折扣
+let lastData = null;        // 当前计算结果（供生成图片）
+const MULS = [1.53, 1.45];  // 可选乘数系数
+let mul = 1.53;             // 当前系数，默认 1.53
+
+const PRICES = [3200,3300,3800,4000,4300,4500,4600,4800,5400,5800,6000,6500];
+const ADDS = [1200,500];
+const DPS = [500,800,1000,1200,1500];
+
+const $ = id => document.getElementById(id);
+const fmt = n => '¥' + Math.floor(n).toLocaleString('zh-CN');
+const num = n => Math.floor(n).toLocaleString('zh-CN');
+const r2 = n => Math.round(n*100)/100;
+
+/* 生成可选按钮 */
+function buildChips(box, list, inputId){
+  list.forEach(v=>{
+    const b=document.createElement('button');
+    b.type='button'; b.textContent=v; b.dataset.v=v;
+    b.addEventListener('click',()=>{ $(inputId).value=v; calc(); });
+    box.appendChild(b);
+  });
+}
+buildChips($('priceChips'), PRICES, 'price');
+buildChips($('addChips'), ADDS, 'add');
+buildChips($('dpChips'), DPS, 'dp');
+
+/* 首付 ± 100 步进 */
+function stepDp(delta){
+  const cur = parseFloat($('dp').value) || 0;
+  $('dp').value = Math.max(0, cur + delta);
+  fitInput($('dp'));
+  calc();
+}
+$('dpMinus').addEventListener('click', ()=>stepDp(-100));
+$('dpPlus').addEventListener('click', ()=>stepDp(100));
+
+/* 加价 ± 100 步进 */
+function stepAdd(delta){
+  const cur = parseFloat($('add').value) || 0;
+  $('add').value = Math.max(0, cur + delta);
+  fitInput($('add'));
+  calc();
+}
+$('addMinus').addEventListener('click', ()=>stepAdd(-100));
+$('addPlus').addEventListener('click', ()=>stepAdd(100));
+
+/* 两个步进输入框：宽度随数字长度自适应，使加号紧贴金额 */
+function fitInput(el){
+  const len = (el.value || '').length;
+  el.style.width = Math.max(4.2, len + 0.6) + 'ch';
+}
+$('dp').addEventListener('input', ()=>fitInput($('dp')));
+$('add').addEventListener('input', ()=>fitInput($('add')));
+fitInput($('dp'));
+fitInput($('add'));
+
+/* 乘数系数选择（单选，默认 1.53） */
+MULS.forEach(v=>{
+  const b=document.createElement('button');
+  b.type='button'; b.textContent=v; b.dataset.v=v;
+  b.addEventListener('click',()=>{ mul=v; calc(); });
+  $('mulChips').appendChild(b);
+});
+
+/* 输入值若与某项一致，则高亮该项 */
+function markChips(boxId, value){
+  [...$(boxId).children].forEach(b=>{
+    b.classList.toggle('on', Number(b.dataset.v) === value);
+  });
+}
+
+function calc(){
+  let price = parseFloat($('price').value);
+  let add   = parseFloat($('add').value);
+  let dp    = parseFloat($('dp').value);
+  if(isNaN(price)||price<0) price = 0;
+  if(isNaN(add)||add<0) add = 0;
+  if(isNaN(dp)||dp<0) dp = 0;
+
+  markChips('priceChips', price);
+  markChips('addChips', add);
+  markChips('dpChips', dp);
+  [...$('mulChips').children].forEach(b=>{
+    b.classList.toggle('on', Number(b.dataset.v) === mul);
+  });
+
+  const err = $('err');
+  if(dp > price){ err.textContent='首付高于销售价'; err.style.display='block'; }
+  else err.style.display='none';
+
+  /* 金额统一向下取整到分（不足1分舍去） */
+  const f2 = n => Math.floor(Number((n).toFixed(6)) * 100) / 100;
+
+  const total = f2((price + add) * mul);
+  const rest = Math.max(0, f2(total - dp));
+  const monthly = f2(rest / N);          // 单月月供
+  const m8 = f2(monthly * EARLY_RATE);   // 提前结清：单月八折月供
+  const save6 = f2(monthly * 0.2 * 6);   // 剩余6期可优惠金额（每期省2成 × 6期）
+
+  /* 统称"方案"，不再区分 A / B */
+  $('pname').textContent = '方案';
+  $('planCard').className = 'plan';
+
+  $('dpa').textContent = fmt(dp);
+  $('ma').innerHTML = num(monthly) + ' 元';
+  $('la').textContent = num(m8) + ' 元';
+  $('ca').textContent = `剩余6期共可优惠 ${num(save6)} 元`;
+
+  /* 存一份供生成图片使用 */
+  lastData = {
+    price: Math.floor(price), add: Math.floor(add), dp: Math.floor(dp),
+    mul: mul, planName: '方案',
+    total: Math.floor(total),
+    monthly: Math.floor(monthly),
+    m8: Math.floor(m8),
+    save6: Math.floor(save6)
+  };
+}
+
+$('price').addEventListener('input', calc);
+$('add').addEventListener('input', calc);
+$('dp').addEventListener('input', calc);
+
+/* ============ 生成图片 ============ */
+const DPR = 3;                 // 3倍像素，图片清晰
+const W = 380;                 // 逻辑宽度（pt）
+let imgURL = null;
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawImage(){
+  const d = lastData;
+  if(!d) return;
+  const FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+
+  // 先做一次高度测量
+  const H = 350;
+  const cv = document.createElement('canvas');
+  cv.width = W * DPR;
+  cv.height = H * DPR;
+  const ctx = cv.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  // 背景
+  ctx.fillStyle = '#f2f3f6';
+  ctx.fillRect(0,0,W,H);
+
+  const pad = 18;
+  const cardW = W - pad*2;
+
+  /* --- 方案卡 --- */
+  const py = pad;
+  const pH = 292;
+  const accent = '#d93a2f';
+
+  ctx.fillStyle = '#ffffff';
+  roundRect(ctx, pad, py, cardW, pH, 16);
+  ctx.fill();
+
+  // 顶部色条
+  ctx.save();
+  roundRect(ctx, pad, py, cardW, pH, 16);
+  ctx.clip();
+  ctx.fillStyle = accent;
+  ctx.fillRect(pad, py, cardW, 4);
+  ctx.restore();
+
+  // 方案标题
+  ctx.fillStyle = accent;
+  ctx.font = `700 15px ${FONT}`;
+  ctx.textAlign = 'left';
+  ctx.fillText(d.planName, pad+16, py+30);
+
+  const rowY = [py+58, py+96, py+134];
+  const labels = ['首付', '月供 8期', '提前结清 打八折'];
+  const values = ['¥' + d.dp, d.monthly + ' 元', d.m8 + ' 元'];
+
+  labels.forEach((lb,i)=>{
+    // 分隔线
+    if(i>0){
+      ctx.strokeStyle = '#eceef2';
+      ctx.beginPath();
+      ctx.moveTo(pad+16, rowY[i]-18);
+      ctx.lineTo(pad+cardW-16, rowY[i]-18);
+      ctx.stroke();
+    }
+    // 左侧标签：与页面一致 13.5px 灰色
+    ctx.fillStyle = '#828896';
+    ctx.font = `13.5px ${FONT}`;
+    ctx.textAlign = 'left';
+    ctx.fillText(lb, pad+16, rowY[i]);
+    // 右侧数值：与页面一致 15px 黑色粗体
+    ctx.fillStyle = '#14171e';
+    ctx.font = `700 15px ${FONT}`;
+    ctx.textAlign = 'right';
+    ctx.fillText(values[i], pad+cardW-16, rowY[i]);
+  });
+
+  // 优惠高亮块：红字右对齐，与页面 offnote 一致
+  const offY = py + 160;
+  const offH = 52;
+  ctx.fillStyle = '#fdeeec';
+  roundRect(ctx, pad+14, offY, cardW-28, offH, 12);
+  ctx.fill();
+
+  ctx.fillStyle = '#d93a2f';
+  ctx.font = `700 14.5px ${FONT}`;
+  ctx.textAlign = 'right';
+  ctx.fillText(`剩余6期共可优惠 ${d.save6} 元`, pad+cardW-28, offY+31);
+
+  // 优惠说明
+  ctx.fillStyle = '#9aa0ae';
+  ctx.font = `11.5px ${FONT}`;
+  ctx.textAlign = 'center';
+  ctx.fillText(`每期按八折计，剩余 6 期共省 ${d.save6} 元`, W/2, py+pH-14);
+
+  const url = cv.toDataURL('image/png');
+  imgURL = url;
+  $('shot').src = url;
+  return url;
+}
+
+function openMask(){
+  $('mask').classList.add('show');
+  document.body.classList.add('masking');
+}
+function closeMask(){
+  $('mask').classList.remove('show');
+  document.body.classList.remove('masking');
+}
+
+function save(){
+  drawImage();
+  if(!imgURL) return;
+  openMask();
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  $('maskTip').innerHTML = isIOS
+    ? '长按下方图片 → <b>存储到“照片”</b>'
+    : '长按下方图片可保存，或点下方按钮下载';
+  $('dlLink').textContent = isIOS ? '或点此在新窗口打开图片' : '下载图片文件';
+}
+
+$('saveBtn').addEventListener('click', save);
+$('closeMask').addEventListener('click', closeMask);
+$('mask').addEventListener('click', e=>{ if(e.target === $('mask')) closeMask(); });
+
+$('dlLink').addEventListener('click', ()=>{
+  if(!imgURL) return;
+  const a = document.createElement('a');
+  a.href = imgURL;
+  a.download = `分期方案_${lastData.price}_${lastData.mul}.png`;
+  a.click();
+});
+
+calc();
+</script>
+</body>
+</html>
